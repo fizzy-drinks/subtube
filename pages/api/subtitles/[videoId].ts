@@ -1,15 +1,14 @@
-import { readFileSync } from 'fs';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { join } from 'path';
-import { NodeList, parseSync } from 'subtitle';
+import { NodeList } from 'subtitle';
 import Result from 'types/Result';
+import getSubs from 'utils/getSubs';
 
 type ApiHandler<R, T = Record<string, string | string[]>> = (
   req: NextApiRequest & { query: T },
   res: NextApiResponse<R>
 ) => void;
 
-const handler: ApiHandler<Result<NodeList>, { videoId?: string }> = (
+const handler: ApiHandler<Result<NodeList>, { videoId?: string }> = async (
   req,
   res
 ) => {
@@ -20,13 +19,8 @@ const handler: ApiHandler<Result<NodeList>, { videoId?: string }> = (
       .send({ success: false, error: new Error('Missing video ID') });
   }
 
-  const testFileContents = readFileSync(
-    join(process.cwd(), 'public/assets/test.srt')
-  ).toString();
-
-  const lyricsArray = parseSync(testFileContents);
-
-  return res.send({ success: true, data: lyricsArray });
+  const subs = await getSubs(videoId);
+  return res.send({ success: true, data: subs });
 };
 
 export default handler;
